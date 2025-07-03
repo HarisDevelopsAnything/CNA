@@ -28,16 +28,16 @@ int main()
     {
         if ('1' == trf[i])
         {
-            match++;
+            ++match;
             if (match == 5)
             {
                 int l = strlen(trf);
-                while (l > i + 1)
+                while (l > i + 2)
                 {
                     trf[l + 1] = trf[l];
                     l--;
                 }
-                trf[i + 1] = '0';
+                trf[i + 2] = '0';
                 match = 0;
             }
         }
