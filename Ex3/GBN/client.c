@@ -20,7 +20,6 @@ int main()
 {
     int sd, port;
     struct sockaddr_in ser;
-
     printf("Enter port no.: ");
     scanf("%d", &port);
     getchar(); // consume newline
