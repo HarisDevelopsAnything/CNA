@@ -14,6 +14,7 @@ int parityCheck(char *arr, int l, int eve)
         }
     }
     if (n % 2 == 0)
+
         even = 1;
     return (eve ? even : !even);
 }

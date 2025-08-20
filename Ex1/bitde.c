@@ -35,14 +35,19 @@ int main()
             {
                 if (bs[i + 1] == '0')
                 {
-                    int k = strlen(bs);
-                    while (k > i + 1)
+                    int k = i + 1;
+                    while (k < strlen(bs))
                     {
-                        bs[k - 1] = bs[k];
+                        bs[k] = bs[k + 1];
+                        k++;
                     }
                     match = 0;
                 }
             }
+        }
+        else
+        {
+            match = 0;
         }
     }
     printf("Destuffed string: %s\n", bs);
