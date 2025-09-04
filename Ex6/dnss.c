@@ -17,7 +17,7 @@ int main()
     socklen_t addr_len = sizeof(client_addr);
 
     char *dn[10] = {"www.google.com", "www.youtube.com", "mail.google.com", "erp.mepcoeng.ac.in", "www.mepcoeng.ac.in", "www.facebook.com", "www.twitter.com", "www.linkedin.com", "www.github.com", "www.stackoverflow.com"};
-    char *ip[10] = {"142.250.190.14", "142.250.190.206", "64.233.177.188", "172.16.16.", "103.21.244.0", "157.240.22.35", "104.244.42.1", "108.177.125.101", "140.82.121.3", "151.101.65.69"};
+    char *ip[10] = {"142.250.190.14", "142.250.190.206", "64.233.177.188", "172.16.16.1", "103.21.244.0", "157.240.22.35", "104.244.42.1", "108.177.125.101", "140.82.121.3", "151.101.65.69"};
     // Create a UDP socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0)
@@ -39,7 +39,7 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    printf("UDP Echo Server listening on port %d...\n", port);
+    printf("UDP Server listening on port %d...\n", port);
 
     // Receive data from the client
     while (1)

@@ -13,6 +13,7 @@ typedef struct
     int seq_no;
     char data;
     int ack;
+    int error_flag; // Added to simulate errors
 } Frame;
 
 int main()
@@ -41,6 +42,10 @@ int main()
         return 1;
     }
 
+    // Allow socket reuse
+    int opt = 1;
+    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
     listen(sd, 1);
     printf("Server waiting...\n");
 
@@ -52,26 +57,81 @@ int main()
         return 1;
     }
 
-    int expected_seq = 0;
-    Frame f;
+    printf("Client connected!\n");
+    printf("Receiving frames using Go-Back-N protocol...\n\n");
 
-    while (read(nsd, &f, sizeof(Frame)))
+    int expected_seq = 0;
+    char received_message[MAX] = {0};
+    Frame f;
+    int message_complete = 0;
+
+    while (!message_complete && read(nsd, &f, sizeof(Frame)))
     {
+        printf("Received Frame: Seq = %d, Data = '%c'", f.seq_no, f.data);
+
+        Frame ack_frame;
+        ack_frame.data = 0;
+        ack_frame.error_flag = 0;
+        
+        // Check if frame has error flag set
+        if (f.error_flag == 1)
+        {
+            printf(" [ERROR DETECTED - CORRUPTED FRAME]\n");
+            // Send NACK
+            ack_frame.seq_no = f.seq_no;
+            ack_frame.ack = -1; // NACK
+            
+            write(nsd, &ack_frame, sizeof(Frame));
+            printf("Sent NACK for frame %d\n\n", f.seq_no);
+            continue;
+        }
+
+        // Check if this is the expected frame
         if (f.seq_no == expected_seq)
         {
-            printf("Received Frame: Seq = %d, Data = %c\n", f.seq_no, f.data);
+            printf(" [ACCEPTED]\n");
+            received_message[expected_seq] = f.data;
+            
+            // Send ACK for this frame
+            ack_frame.seq_no = f.seq_no;
+            ack_frame.ack = 1; // ACK
+            
+            write(nsd, &ack_frame, sizeof(Frame));
+            printf("Sent ACK for frame %d\n", f.seq_no);
+            
+            // Check if message is complete (ends with '*')
+            if (f.data == '*')
+            {
+                printf("\nMessage received completely: %s\n", received_message);
+                message_complete = 1;
+                break;
+            }
+            
             expected_seq++;
         }
         else
         {
-            printf("Out of order frame. Expected %d but got %d. Discarded.\n", expected_seq, f.seq_no);
+            printf(" [OUT OF ORDER - DISCARDED]\n");
+            // Send ACK for the last correctly received frame
+            if (expected_seq > 0)
+            {
+                ack_frame.seq_no = expected_seq - 1;
+                ack_frame.ack = 1; // ACK
+                
+                write(nsd, &ack_frame, sizeof(Frame));
+                printf("Sent duplicate ACK for frame %d\n", expected_seq - 1);
+            }
+            else
+            {
+                // If no frames have been accepted yet, send NACK
+                ack_frame.seq_no = f.seq_no;
+                ack_frame.ack = -1; // NACK
+                
+                write(nsd, &ack_frame, sizeof(Frame));
+                printf("Sent NACK for frame %d (first frame expected is 0)\n", f.seq_no);
+            }
         }
-
-        // Send ACK (always ack the last correct frame)
-        Frame ack_frame;
-        ack_frame.ack = 1;
-        ack_frame.seq_no = expected_seq - 1; // last accepted
-        write(nsd, &ack_frame, sizeof(Frame));
+        printf("Expected next frame: %d\n\n", expected_seq);
     }
 
     close(nsd);
